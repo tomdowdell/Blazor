@@ -12,6 +12,12 @@ using AngleSharp.Parser.Html;
 using Microsoft.AspNetCore.Razor.Language;
 using Microsoft.AspNetCore.Razor.Language.CodeGeneration;
 using Microsoft.AspNetCore.Razor.Language.Intermediate;
+using Microsoft.AspNetCore.Blazor.RenderTree;
+using System;
+using System.Collections.Generic;
+using System.Linq;
+using System.Text;
+using Microsoft.AspNetCore.Razor.Language.Extensions;
 
 namespace Microsoft.AspNetCore.Blazor.Razor
 {
@@ -33,6 +39,58 @@ namespace Microsoft.AspNetCore.Blazor.Razor
         private IList<object> _currentAttributeValues;
         private IDictionary<string, PendingAttribute> _currentElementAttributes = new Dictionary<string, PendingAttribute>();
         private IList<PendingAttributeToken> _currentElementAttributeTokens = new List<PendingAttributeToken>();
+        private Stack<PendingComponent> _pendingComponents = new Stack<PendingComponent>();
+
+        public void BeginComponent(CodeRenderingContext context, DefaultTagHelperBodyIntermediateNode node)
+        {
+            _pendingComponents.Push(new PendingComponent { BodyNode = node });
+        }
+
+        public void AddComponentProperty(CodeRenderingContext context, string name, IntermediateNode value)
+        {
+            var component = _pendingComponents.Peek();
+            component.Properties.Add(name, value);
+        }
+
+        public void EndComponent(CodeRenderingContext context)
+        {
+            var component = _pendingComponents.Pop();
+            context.CodeWriter
+                .WriteStartMethodInvocation($"{builderVarName}.{nameof(RenderTreeBuilder.OpenComponentElement)}<{component.BodyNode.TagName}>")
+                .Write((_sourceSequence++).ToString())
+                .WriteEndMethodInvocation();
+
+            foreach (var property in component.Properties)
+            {
+                context.CodeWriter
+                    .WriteStartMethodInvocation($"{builderVarName}.{nameof(RenderTreeBuilder.AddAttribute)}")
+                    .Write((_sourceSequence++).ToString())
+                    .WriteParameterSeparator()
+                    .WriteStringLiteral(property.Key)
+                    .WriteParameterSeparator();
+
+                if (property.Value is DefaultTagHelperHtmlAttributeIntermediateNode htmlValue)
+                {
+                    throw new RazorCompilerException($"The component '{component.BodyNode.TagName}' does not accept a property with name '{property.Key}'.");
+                }
+                else if (property.Value is DefaultTagHelperPropertyIntermediateNode propertyValue)
+                {
+                    var attribute = propertyValue.TagHelper.BoundAttributes.Single(a => a.Name == property.Key);
+                    var token = property.Value.FindDescendantNodes<IntermediateToken>().Single();
+                    token.Kind = attribute.TypeName == "string" ? TokenKind.Html : TokenKind.CSharp;
+                    WriteAttributeValue(context.CodeWriter, token);
+                }
+
+                context.CodeWriter
+                    .WriteEndMethodInvocation();
+            }
+
+            context.RenderChildren(component.BodyNode);
+            context.CodeWriter
+                .WriteStartMethodInvocation($"{builderVarName}.{nameof(RenderTreeBuilder.CloseElement)}")
+                .WriteEndMethodInvocation();
+        }
+
         private int _sourceSequence = 0;
 
         private struct PendingAttribute
@@ -43,6 +101,12 @@ namespace Microsoft.AspNetCore.Blazor.Razor
         private struct PendingAttributeToken
         {
             public IntermediateToken AttributeValue;
+        }
+
+        private class PendingComponent
+        {
+            public DefaultTagHelperBodyIntermediateNode BodyNode;
+            public Dictionary<string, IntermediateNode> Properties = new Dictionary<string, IntermediateNode>();
         }
 
         public override void BeginWriterScope(CodeRenderingContext context, string writer)

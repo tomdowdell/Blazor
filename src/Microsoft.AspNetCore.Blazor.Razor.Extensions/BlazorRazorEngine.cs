@@ -4,6 +4,9 @@
 using System.Linq;
 using Microsoft.AspNetCore.Razor.Language;
 using Microsoft.AspNetCore.Razor.Language.Extensions;
+using Microsoft.AspNetCore.Blazor.Components;
+using System.Linq;
+using System.Collections.Generic;
 
 namespace Microsoft.AspNetCore.Blazor.Razor
 {
@@ -17,7 +20,7 @@ namespace Microsoft.AspNetCore.Blazor.Razor
 
         public RazorEngine Engine => _engine;
 
-        public BlazorRazorEngine()
+        public BlazorRazorEngine(IEnumerable<BlazorComponentDescriptor> componentDescriptors)
         {
             _codegenOptions = RazorCodeGenerationOptions.CreateDefault();
 
@@ -28,6 +31,9 @@ namespace Microsoft.AspNetCore.Blazor.Razor
                 InjectDirective.Register(configure);
                 TemporaryLayoutPass.Register(configure);
                 TemporaryImplementsPass.Register(configure);
+                configure.Features.Add(new BlazorComponentsTagHelperFeature(componentDescriptors));
+                configure.Features.Remove(
+                    configure.Features.Single(f => f.GetType().Name == "PreallocatedTagHelperAttributeOptimizationPass"));
 
                 configure.SetBaseType(BlazorComponent.FullTypeName);
 
