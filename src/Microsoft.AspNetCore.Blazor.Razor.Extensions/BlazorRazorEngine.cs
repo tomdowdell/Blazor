@@ -4,8 +4,6 @@
 using System.Linq;
 using Microsoft.AspNetCore.Razor.Language;
 using Microsoft.AspNetCore.Razor.Language.Extensions;
-using Microsoft.AspNetCore.Blazor.Components;
-using System.Linq;
 using System.Collections.Generic;
 
 namespace Microsoft.AspNetCore.Blazor.Razor

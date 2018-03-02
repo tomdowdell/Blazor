@@ -3,9 +3,9 @@
 
 using System.Collections.Generic;
 
-namespace Microsoft.AspNetCore.Blazor.Build.Core.RazorCompilation
+namespace Microsoft.AspNetCore.Blazor.Razor
 {
-    internal class BlazorComponentDescriptor
+    public class BlazorComponentDescriptor
     {
         public string AssemblyName { get; set; }
         public string TypeName { get; set; }

@@ -5,7 +5,7 @@ using System.Collections.Generic;
 using System.Linq;
 using Microsoft.AspNetCore.Razor.Language;
 
-namespace Microsoft.AspNetCore.Blazor.Build.Core.RazorCompilation.Engine
+namespace Microsoft.AspNetCore.Blazor.Razor
 {
     internal class BlazorComponentsTagHelperFeature : ITagHelperFeature
     {

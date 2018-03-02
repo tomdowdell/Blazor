@@ -6,18 +6,13 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using System.Text.RegularExpressions;
-using AngleSharp;
-using AngleSharp.Html;
-using AngleSharp.Parser.Html;
 using Microsoft.AspNetCore.Razor.Language;
 using Microsoft.AspNetCore.Razor.Language.CodeGeneration;
 using Microsoft.AspNetCore.Razor.Language.Intermediate;
-using Microsoft.AspNetCore.Blazor.RenderTree;
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
 using Microsoft.AspNetCore.Razor.Language.Extensions;
+using AngleSharp;
+using AngleSharp.Html;
+using AngleSharp.Parser.Html;
 
 namespace Microsoft.AspNetCore.Blazor.Razor
 {
@@ -56,14 +51,14 @@ namespace Microsoft.AspNetCore.Blazor.Razor
         {
             var component = _pendingComponents.Pop();
             context.CodeWriter
-                .WriteStartMethodInvocation($"{builderVarName}.{nameof(RenderTreeBuilder.OpenComponentElement)}<{component.BodyNode.TagName}>")
+                .WriteStartMethodInvocation($"{_scopeStack.BuilderVarName}.{nameof(RenderTreeBuilder.OpenComponent)}<{component.BodyNode.TagName}>")
                 .Write((_sourceSequence++).ToString())
                 .WriteEndMethodInvocation();
 
             foreach (var property in component.Properties)
             {
                 context.CodeWriter
-                    .WriteStartMethodInvocation($"{builderVarName}.{nameof(RenderTreeBuilder.AddAttribute)}")
+                    .WriteStartMethodInvocation($"{_scopeStack.BuilderVarName}.{nameof(RenderTreeBuilder.AddAttribute)}")
                     .Write((_sourceSequence++).ToString())
                     .WriteParameterSeparator()
                     .WriteStringLiteral(property.Key)
@@ -87,7 +82,7 @@ namespace Microsoft.AspNetCore.Blazor.Razor
 
             context.RenderChildren(component.BodyNode);
             context.CodeWriter
-                .WriteStartMethodInvocation($"{builderVarName}.{nameof(RenderTreeBuilder.CloseElement)}")
+                .WriteStartMethodInvocation($"{_scopeStack.BuilderVarName}.{nameof(RenderTreeBuilder.CloseComponent)}")
                 .WriteEndMethodInvocation();
         }
 

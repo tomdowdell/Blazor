@@ -2,7 +2,6 @@
 // Licensed under the Apache License, Version 2.0. See License.txt in the project root for license information.
 
 using Microsoft.AspNetCore.Razor.Language;
-using Microsoft.AspNetCore.Blazor.Build.Core.RazorCompilation.Engine;
 using Microsoft.AspNetCore.Blazor.Components;
 using Microsoft.AspNetCore.Blazor.RenderTree;
 using Microsoft.CodeAnalysis.CSharp;
@@ -13,10 +12,7 @@ using System.Collections.Generic;
 using System.IO;
 using System.Linq;
 using System.CodeDom.Compiler;
-using Microsoft.AspNetCore.Razor.Language;
-using Microsoft.AspNetCore.Blazor.Components;
 using Microsoft.AspNetCore.Blazor.Razor;
-using Microsoft.AspNetCore.Blazor.RenderTree;
 
 namespace Microsoft.AspNetCore.Blazor.Build.Core.RazorCompilation
 {
@@ -133,7 +129,7 @@ namespace Microsoft.AspNetCore.Blazor.Build.Core.RazorCompilation
                 // name and any public members. Don't need to actually emit all the RenderTreeBuilder
                 // invocations.
 
-                var engine = new BlazorRazorEngine();
+                var engine = new BlazorRazorEngine(_componentDescriptors);
                 var blazorTemplateEngine = new BlazorTemplateEngine(
                     engine.Engine,
                     RazorProjectFileSystem.Create(inputRootPath));
@@ -211,6 +207,8 @@ namespace Microsoft.AspNetCore.Blazor.Build.Core.RazorCompilation
             resultOutput.WriteLine(
                 $@"namespace {@namespace}.TagHelpers
                    {{
+                        using Microsoft.AspNetCore.Blazor;
+
                         [Microsoft.AspNetCore.Razor.TagHelpers.HtmlTargetElement(nameof({className}))]
                         public class __Generated__{className}TagHelper : {className}, Microsoft.AspNetCore.Razor.TagHelpers.ITagHelper
                         {{
